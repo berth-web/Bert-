@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Berth</title>
+<title>Berth — P2P App Store</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
 <style>
@@ -73,8 +73,8 @@ body{font-family:'Bricolage Grotesque',system-ui,sans-serif;color:var(--ink);bac
 .app .ic{width:68px;height:68px;font-size:34px}
 .app:hover .ic{transform:translateY(-3px)}
 .ic{transition:transform .15s}
-.win[data-id=web] .body,.win[data-id=chat] .body{padding:0;display:flex;flex:1;min-height:0;overflow:hidden}
-.fx{display:flex;flex:1;min-width:0}
+.win[data-id=web] .body,.win[data-id=chat] .body,.win[data-id=store] .body{padding:0;display:flex;flex:1;min-height:0;overflow:hidden}
+.fx{display:flex;flex:1;min-width:0;min-height:0;width:100%}
 .br,.chat{display:flex;flex-direction:column;flex:1;min-width:0}
 .tabs{display:flex;gap:4px;padding:6px 8px 0;overflow:auto;flex:none}
 .tab{display:flex;align-items:center;gap:8px;max-width:150px;padding:5px 10px;border-radius:9px 9px 0 0;font-size:12.5px;cursor:pointer;background:var(--glass)}
@@ -102,7 +102,15 @@ body{font-family:'Bricolage Grotesque',system-ui,sans-serif;color:var(--ink);bac
 .it[data-b]:not([data-b=""])::after{content:attr(data-b);position:absolute;top:-5px;right:-5px;background:#e5604f;color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 6px}
 @media (max-width:620px){#bar .hint{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.store{font:14px/1.5 system-ui;min-width:0}.store h2{margin:0}.store label{display:block;margin:10px 0}.store input,.store textarea,.store select{display:block;width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--edge);border-radius:8px;background:var(--glass);color:var(--ink);font:inherit}.store textarea{height:105px;resize:vertical;user-select:text}.store button{cursor:pointer;border:1px solid var(--edge);border-radius:8px;background:var(--glass);color:var(--ink);padding:7px 10px}.store-actions,.store-entry{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.store-entry span{flex:1}.store-status{color:var(--ink2)}
+.store{padding:12px 18px 24px;font:14px/1.5 system-ui;min-width:0;width:100%;display:flex;flex-direction:column;flex:1}.store-embedded{display:flex;flex-direction:column;flex:1;min-height:400px}.store-embedded iframe{border:1px solid var(--edge);border-radius:12px;width:100%;height:100%;min-height:380px;flex:1;background:#121212}.store-embedded p{font-size:12px;color:var(--ink2)}.store-tools{padding:10px 0}.store-tools summary{cursor:pointer;font-weight:700;padding:10px}.win[data-id=store] .body{display:flex;flex:1;min-height:0;overflow:auto}.win[data-id=store] .body>div{width:100%}.store h2{margin:0;font-size:24px}.store>p{color:var(--ink2)}.store h3{border-top:1px solid var(--edge);padding-top:14px;margin-top:22px}.store label{display:block;margin:10px 0}.store input,.store textarea,.store select{display:block;width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--edge);border-radius:8px;background:var(--glass);color:var(--ink);font:inherit}.store textarea{height:105px;resize:vertical;user-select:text}.store button{cursor:pointer;border:1px solid var(--edge);border-radius:8px;background:var(--glass);color:var(--ink);padding:7px 10px}.store-actions,.store-entry{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.store-entry span{flex:1}.store-status{color:var(--ink2)}
+
+/* The uploaded P2P website is the App Store, not a replacement UI. */
+.win[data-id="store"] .body{padding:0;display:flex;flex:1;min-height:0;overflow:hidden}
+.p2p-store{width:100%;height:100%;display:flex;flex-direction:column;min-height:0}
+.p2p-store>iframe{flex:1;min-height:0;width:100%;border:0;background:#121212}
+.p2p-installer{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 12px;background:var(--win);border-top:1px solid var(--edge);font:12px system-ui}
+.p2p-installer input{max-width:185px}.p2p-installer button{padding:7px 10px;border:1px solid var(--edge);border-radius:8px;background:var(--glass);color:var(--ink);cursor:pointer}
+.p2p-installer details{width:100%}.p2p-installer summary{cursor:pointer}.p2p-installer .store-entry{display:flex;gap:8px;align-items:center;margin:5px 0}.p2p-installer .store-entry span{flex:1}
 </style>
 </head>
 <body>
@@ -118,6 +126,6 @@ body{font-family:'Bricolage Grotesque',system-ui,sans-serif;color:var(--ink);bac
 <div id="tip" class="glass"></div>
 <div id="ctx"></div>
 <div id="pad"><input id="q" placeholder="Search apps" autocomplete="off" aria-label="Search apps"><div id="grid"></div></div>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=p2p-website-4"></script>
 </body>
 </html>

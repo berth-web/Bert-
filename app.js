@@ -118,7 +118,7 @@ function focus(id){
 function open(id){
   const a=A[id],el=mk('section','win');
   el.innerHTML='<header><span class="tl"><b class="x" title="Close"></b><b class="m" title="Minimize"></b></span><strong>'+a.name+'</strong></header><div class="body"></div>';
-  const w=Math.min(innerWidth-20,id==='store'?650:id==='web'?720:id==='chat'?360:id==='term'?520:id==='calc'?260:400);el.dataset.id=id;if(id==='web'||id==='chat')el.style.height=Math.max(260,Math.min(innerHeight-150,id==='web'?480:420))+'px';
+  const w=Math.min(innerWidth-20,id==='store'?900:id==='web'?720:id==='chat'?360:id==='term'?520:id==='calc'?260:400);el.dataset.id=id;if(id==='web'||id==='chat'||id==='store')el.style.height=Math.max(260,Math.min(innerHeight-150,id==='store'?650:id==='web'?480:420))+'px';
   el.style.width=w+'px';
   el.style.left=Math.max(10,(innerWidth-w)/2+((n%6)-2)*30)+'px';
   el.style.top=(60+(n%6)*28)+'px';n++;
@@ -160,7 +160,7 @@ function restore(id){
 /* window contents */
 function body(id){
   const d=mk('div');
-  if(id==='store'){d.append(appStore());}else if(installedApps[id]){const frame=mk('iframe');frame.setAttribute('sandbox','allow-scripts allow-forms allow-modals allow-downloads');frame.setAttribute('referrerpolicy','no-referrer');frame.style.cssText='width:100%;height:420px;border:0;background:white;border-radius:8px';frame.srcdoc=installedApps[id].html;d.append(frame);}else if(id==='notes'){
+  if(id==='store'){d.className='fx';d.append(appStore());}else if(installedApps[id]){const frame=mk('iframe');frame.setAttribute('sandbox','allow-scripts allow-forms allow-modals allow-downloads');frame.setAttribute('referrerpolicy','no-referrer');frame.style.cssText='width:100%;height:420px;border:0;background:white;border-radius:8px';frame.srcdoc=installedApps[id].html;d.append(frame);}else if(id==='notes'){
     const t=mk('textarea');t.value=S.notes;t.placeholder='Jot something down. It is saved in this browser.';
     t.oninput=()=>{S.notes=t.value;save()};d.append(t);
   }else if(id==='term'){
@@ -528,20 +528,12 @@ function installHTML(name,html){
 function uninstallApp(id){if(!installedApps[id])return;close(id);delete installedApps[id];delete A[id];const i=APPS.findIndex(a=>a.id===id);if(i>=0)APPS.splice(i,1);S.dock=S.dock.filter(x=>x!==id);persistApps();save();render()}
 function downloadHTML(name,html){const blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(name.replace(/[^a-z0-9_-]/gi,'_')||'app')+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function appStore(){
-  const d=mk('div');d.className='store';
-  d.innerHTML='<h2>App Store</h2><p>Install HTML only for yourself, or download the file to your device. Apps run in isolated frames.</p><label>App name<input class="store-name" placeholder="My App" maxlength="45"></label><label>HTML source<textarea class="store-html" placeholder="Paste an HTML document here"></textarea></label><label>Or choose an HTML file<input class="store-file" type="file" accept=".html,.htm,text/html"></label><div class="store-actions"><button class="store-install">Install in Berth</button><button class="store-download">Download HTML</button></div><h3>My installed apps</h3><div class="store-list"></div><h3>P2P transfer</h3><p>Share an app directly with another person using WebRTC. Exchange offer and answer text privately. Both people must be online. No central server stores your HTML.</p><select class="store-share"></select><div class="store-actions"><button class="store-offer">Create offer (sender)</button><button class="store-answer">Accept offer (receiver)</button><button class="store-finish">Finish connection (sender)</button></div><textarea class="store-signal" placeholder="Paste an offer or answer here"></textarea><button class="store-copy">Copy generated signal</button><p class="store-status" role="status"></p>';
-  const q=x=>d.querySelector(x),name=q('.store-name'),html=q('.store-html'),status=q('.store-status');let pc=null,channel=null,signal='';
-  const refresh=()=>{const list=q('.store-list'),sel=q('.store-share');list.replaceChildren();sel.replaceChildren();for(const [id,a] of Object.entries(installedApps)){const line=mk('div','store-entry'),label=mk('span');label.textContent=a.name;const run=mk('button');run.textContent='Open';run.onclick=()=>launch(id);const remove=mk('button');remove.textContent='Uninstall';remove.onclick=()=>{uninstallApp(id);refresh()};line.append(label,run,remove);list.append(line);const opt=new Option(a.name,id);sel.append(opt)}if(!list.children.length)list.textContent='No apps installed yet.'};
-  q('.store-file').onchange=async e=>{const file=e.target.files[0];if(!file)return;if(file.size>500000){status.textContent='Maximum file size is 500 KB.';return}name.value=file.name.replace(/\.html?$/i,'');html.value=await file.text()};
-  q('.store-install').onclick=()=>{installHTML(name.value,html.value);refresh()};q('.store-download').onclick=()=>{if(!html.value.trim())return alert('Add HTML first.');downloadHTML(name.value||'app',html.value)};
-  const newPeer=()=>{if(pc)pc.close();pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});pc.onconnectionstatechange=()=>status.textContent='P2P: '+pc.connectionState;pc.ondatachannel=e=>{channel=e.channel;wire()};return pc};
-  const wire=()=>{channel.onopen=()=>{status.textContent='Connected directly.';const a=installedApps[q('.store-share').value];if(channel.label==='berth-send'&&a)channel.send(JSON.stringify({name:a.name,html:a.html}))};channel.onmessage=e=>{try{const a=JSON.parse(e.data);if(typeof a.name==='string'&&typeof a.html==='string'&&a.html.length<=500000){name.value=a.name;html.value=a.html;status.textContent='Received '+a.name+'. Choose Install in Berth or Download HTML.'}}catch(x){status.textContent='Invalid app transfer.'}}};
-  const waitIce=peer=>new Promise(resolve=>{if(peer.iceGatheringState==='complete')return resolve();const timeout=setTimeout(resolve,5000);peer.addEventListener('icegatheringstatechange',()=>{if(peer.iceGatheringState==='complete'){clearTimeout(timeout);resolve()}},{once:false})});
-  q('.store-offer').onclick=async()=>{try{newPeer();channel=pc.createDataChannel('berth-send');wire();await pc.setLocalDescription(await pc.createOffer());await waitIce(pc);signal=JSON.stringify(pc.localDescription);q('.store-signal').value=signal;status.textContent='Send this offer to the receiver, then paste their answer here.'}catch(e){status.textContent=e.message}};
-  q('.store-answer').onclick=async()=>{try{const offer=JSON.parse(q('.store-signal').value);if(offer.type!=='offer')throw Error('Paste a valid offer.');newPeer();await pc.setRemoteDescription(offer);await pc.setLocalDescription(await pc.createAnswer());await waitIce(pc);signal=JSON.stringify(pc.localDescription);q('.store-signal').value=signal;status.textContent='Send this answer back to the sender.'}catch(e){status.textContent=e.message}};
-  q('.store-finish').onclick=async()=>{try{const answer=JSON.parse(q('.store-signal').value);if(!pc||answer.type!=='answer')throw Error('Paste the receiver answer.');await pc.setRemoteDescription(answer);status.textContent='Connecting...'}catch(e){status.textContent=e.message}};
-  q('.store-copy').onclick=async()=>{try{await navigator.clipboard.writeText(signal);status.textContent='Signal copied.'}catch(e){status.textContent='Select and copy the signal manually.'}};
-  refresh();return d;
+  // Open the supplied file itself, not a custom store or installer.
+  const frame=document.createElement('iframe');
+  frame.src='./p2p.svg.html';
+  frame.title='P2P App Store';
+  frame.style.cssText='display:block;width:100%;height:100%;flex:1;min-height:0;border:0;background:#121212';
+  return frame;
 }
 
 /* top bar, clock, simulated monitor */
