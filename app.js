@@ -276,7 +276,10 @@ const PROX=[
   ['allorigins-json',u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),'json'],
   ['codetabs',u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)],
   ['corsproxy',u=>'https://corsproxy.io/?url='+encodeURIComponent(u)],
-  ['thingproxy',u=>'https://thingproxy.freeboard.io/fetch/'+u]
+  ['thingproxy',u=>'https://thingproxy.freeboard.io/fetch/'+u],
+  ['yacdn',u=>'https://yacdn.org/proxy/'+u],
+  ['cors-lol',u=>'https://api.cors.lol/?url='+encodeURIComponent(u)],
+  ['cors-eu',u=>'https://cors.eu.org/'+u]
 ];
 const INJ='('+(function(){
   document.addEventListener('click',function(e){
@@ -297,7 +300,7 @@ const INJ='('+(function(){
   });
 }).toString()+')()';
 const proxies=()=>{const l=PROX.slice();if(S.proxy&&/^https?:\/\//i.test(S.proxy))l.unshift(['your proxy',u=>S.proxy.replace(/\/+$/,'')+'/?url='+encodeURIComponent(u)]);return l};
-async function fetchPage(u){
+async function round(u){
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),15000);
   const one=async([name,fn,mode])=>{
     let r;
@@ -319,6 +322,22 @@ async function fetchPage(u){
   try{const res=await Promise.any(proxies().map(one));ctl.abort();return res}
   catch(e){return {errs:(e.errors||[e]).map(x=>x.message)}}
   finally{clearTimeout(tm)}
+}
+const pageCache=new Map();
+async function fetchPage(u,onTry){
+  const hit=pageCache.get(u);
+  if(hit)return {html:hit};
+  let last;
+  for(let i=0;i<3;i++){
+    if(i){if(onTry)onTry(i+1);await new Promise(r=>setTimeout(r,i*1000))}
+    last=await round(u);
+    if(last.nonhtml)return last;
+    if(last.html){
+      if(last.html.length<1500000){pageCache.set(u,last.html);if(pageCache.size>25)pageCache.delete(pageCache.keys().next().value)}
+      return last;
+    }
+  }
+  return last;
 }
 function prep(html,u){
   const d=new DOMParser().parseFromString(html,'text/html');
@@ -372,7 +391,7 @@ function browser(){
     const my=++tok;
     fr.setAttribute('sandbox','allow-scripts');fr.removeAttribute('src');
     fr.srcdoc='<body style="font:16px system-ui;padding:22px;color:#456">Loading '+esc(u)+'...';
-    const r=await fetchPage(u);
+    const r=await fetchPage(u,n=>{if(my===tok)fr.srcdoc='<body style="font:16px system-ui;padding:22px;color:#456">Still trying ('+n+' of 3)...'});
     if(my!==tok||!fr.isConnected)return;
     const box='<body style="font:16px/1.5 system-ui;padding:22px;color:#13293a">';
     if(r.errs){fr.srcdoc=box+'<h2>Could not load this page</h2><p>Every proxy failed. Try again in a minute, or add your own proxy in Settings.</p><ul>'+r.errs.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';return}
