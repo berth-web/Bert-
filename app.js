@@ -530,8 +530,8 @@ function downloadHTML(name,html){const blob=new Blob([html],{type:'text/html;cha
 function appStore(){
   // Open the supplied file itself, not a custom store or installer.
   const frame=document.createElement('iframe');
-  frame.src='./p2p.svg.html';
-  frame.title='P2P App Store';
+  frame.src='https://imaginative-cactus-b5f634.netlify.app/';
+  frame.title='Berth App Store';
   frame.style.cssText='display:block;width:100%;height:100%;flex:1;min-height:0;border:0;background:#121212';
   return frame;
 }
