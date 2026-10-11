@@ -2,10 +2,10 @@
 const APPS=[['files','Files','📁',210],['web','Browser','🧭',200],['chat','Chat','💬',160],['mail','Mail','✉️',350],['notes','Notes','📝',45],['term','Terminal','⌨️',150],['calc','Calculator','🧮',20],['music','Music','🎵',330],['photos','Photos','🖼️',280],['cal','Calendar','📅',5],['maps','Maps','🗺️',130],['game','Games','🎮',260],['clock','Clock','⏱️',175],['paint','Paint','🎨',310],['vault','Vault','🔐',230],['wx','Weather','⛅',195],['set','Settings','⚙️',220],['store','App Store','🛍️',285]].map(([id,name,e,h])=>({id,name,e,h}));
 const A=Object.fromEntries(APPS.map(a=>[a.id,a]));
 const $=s=>document.querySelector(s),mk=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
-const DEF={dock:['files','web','chat','mail','notes','term','calc','set'],size:56,mag:1.8,blur:24,theme:'auto',notes:'',mon:true};
+const DEF={dock:['files','web','chat','mail','notes','term','calc','store','set'],size:56,mag:1.8,blur:24,theme:'auto',notes:'',mon:true};
 let S=Object.assign({},DEF);
 try{Object.assign(S,JSON.parse(localStorage.getItem('berth.v1')||'{}'))}catch(e){}
-S.dock=(Array.isArray(S.dock)?S.dock:DEF.dock).filter(i=>A[i]);if(!S.v){if(!S.dock.includes('chat'))S.dock.splice(Math.min(2,S.dock.length),0,'chat');S.v=2}
+S.dock=(Array.isArray(S.dock)?S.dock:DEF.dock).filter(i=>A[i]);if(!S.dock.includes('store'))S.dock.push('store');if(!S.v){if(!S.dock.includes('chat'))S.dock.splice(Math.min(2,S.dock.length),0,'chat');S.v=2}
 const save=()=>{try{localStorage.setItem('berth.v1',JSON.stringify(S))}catch(e){}};
 const dock=$('#dock'),tip=$('#tip'),ctx=$('#ctx'),desk=$('#desk'),pad=$('#pad'),grid=$('#grid'),q=$('#q');
 const wins={};let z=10,n=0,active=null,cur=56,hov=false,baseW=0,drag=null,ly=0,tmr=0;
@@ -545,6 +545,7 @@ function appStore(){
 }
 
 /* top bar, clock, simulated monitor */
+$('#open-store').onclick=()=>launch('store');
 $('#mt').onclick=()=>{S.mon=!S.mon;save();cfg()};
 const tick=()=>{$('#clk').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
 const M={c:[],m:[],n:[]},V={c:30,m:52,n:20};
