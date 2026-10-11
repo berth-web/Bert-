@@ -212,6 +212,10 @@ function body(id){
     const sel=mk('select','','<option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option>');
     sel.value=S.theme;sel.onchange=()=>{S.theme=sel.value;save();cfg()};
     row('Theme',sel);
+    const pi=mk('input');pi.placeholder='https://name.workers.dev';pi.value=S.proxy||'';pi.spellcheck=false;
+    pi.style.cssText='width:55%;font:inherit;padding:3px 8px;border-radius:8px;border:1px solid var(--edge);background:var(--glass);color:inherit';
+    pi.onchange=()=>{S.proxy=pi.value.trim();save()};
+    row('Browser proxy',pi);
     const rb=mk('button','','Reset dock');rb.style.cssText='margin-top:8px;font:inherit;padding:6px 12px;border-radius:9px;border:1px solid var(--edge);background:var(--glass);color:inherit;cursor:pointer';
     rb.onclick=()=>{S.dock=[...DEF.dock];save();render()};d.append(rb);
   }else{
@@ -267,7 +271,13 @@ document.addEventListener('keydown',e=>{
 /* mini browser */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 /* Web pages are fetched through free public CORS proxies, cleaned of scripts, and shown in a sandboxed frame. */
-const PROX=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?url='+encodeURIComponent(u)];
+const PROX=[
+  ['allorigins',u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)],
+  ['allorigins-json',u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),'json'],
+  ['codetabs',u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)],
+  ['corsproxy',u=>'https://corsproxy.io/?url='+encodeURIComponent(u)],
+  ['thingproxy',u=>'https://thingproxy.freeboard.io/fetch/'+u]
+];
 const INJ='('+(function(){
   document.addEventListener('click',function(e){
     var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;
@@ -286,18 +296,29 @@ const INJ='('+(function(){
     parent.postMessage({berthGo:u.href},'*');
   });
 }).toString()+')()';
+const proxies=()=>{const l=PROX.slice();if(S.proxy&&/^https?:\/\//i.test(S.proxy))l.unshift(['your proxy',u=>S.proxy.replace(/\/+$/,'')+'/?url='+encodeURIComponent(u)]);return l};
 async function fetchPage(u){
-  for(const p of PROX){
-    try{
-      const c=new AbortController(),tm=setTimeout(()=>c.abort(),15000);
-      const r=await fetch(p(u),{signal:c.signal});clearTimeout(tm);
-      if(!r.ok)continue;
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),15000);
+  const one=async([name,fn,mode])=>{
+    let r;
+    try{r=await fetch(fn(u),{signal:ctl.signal})}
+    catch(e){throw new Error(name+': '+(e&&e.name==='AbortError'?'timed out':'blocked or offline'))}
+    if(!r.ok)throw new Error(name+': HTTP '+r.status);
+    let txt;
+    if(mode==='json'){
+      const j=await r.json();txt=j.contents||'';
+      if(/^data:/.test(txt))return {nonhtml:true};
+    }else{
       const ct=r.headers.get('content-type')||'';
-      if(ct&&!/html|xml|text/i.test(ct))return {nonhtml:true};
-      return {html:await r.text()};
-    }catch(e){}
-  }
-  return null;
+      if(ct&&!/html|xml|text|json/i.test(ct))return {nonhtml:true};
+      txt=await r.text();
+    }
+    if(!/<(html|body|head|div|p|a|h1|title)/i.test(txt))throw new Error(name+': empty or not a page');
+    return {html:txt};
+  };
+  try{const res=await Promise.any(proxies().map(one));ctl.abort();return res}
+  catch(e){return {errs:(e.errors||[e]).map(x=>x.message)}}
+  finally{clearTimeout(tm)}
 }
 function prep(html,u){
   const d=new DOMParser().parseFromString(html,'text/html');
@@ -354,7 +375,7 @@ function browser(){
     const r=await fetchPage(u);
     if(my!==tok||!fr.isConnected)return;
     const box='<body style="font:16px/1.5 system-ui;padding:22px;color:#13293a">';
-    if(!r){fr.srcdoc=box+'<h2>Could not load this page</h2><p>The free proxy this browser relies on may be down, or it blocks this site. Use "Open the real site" above.</p>';return}
+    if(r.errs){fr.srcdoc=box+'<h2>Could not load this page</h2><p>Every proxy failed. Try again in a minute, or add your own proxy in Settings.</p><ul>'+r.errs.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';return}
     if(r.nonhtml){fr.srcdoc=box+'<h2>Not a web page</h2><p>This address is a file, image or video. Use "Open the real site" above.</p>';return}
     const p=prep(r.html,u);
     if(p[0]){t.t=p[0];drawTabs()}
