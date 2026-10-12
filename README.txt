@@ -1,1 +1,1 @@
-Upload ALL FOUR files to the ROOT of your GitHub Pages repository, overwriting existing files. Commit and wait for deployment. The App Store icon now opens ./p2p.svg.html directly in a Berth window. Note: p2p.svg.html itself loads external content from Bitbucket.
+official unblocked is https://mathacademyforkids.netlify.app/ and https://berth-web.github.io/Bert-/
